@@ -11,7 +11,7 @@ from latexify import LatexBuilder
 from search_ddg import SearcherBotDDG
 from search_arxiv import SearcherBotARXIV
 
-TG_TOKEN = "<token>"
+TG_TOKEN = "7029262559:AAHESYrvvDyRunTvzb0DoDu_p_2oeRyECyE"
 # https://t.me/GigaResearchAssistant_bot
 
 class L18N_CONFIG:
@@ -26,9 +26,9 @@ class L18N_CONFIG:
     subject_area_response = "Вот какие области я распознал: "
     research_name_input = "Введите имя вашей научной работы"
     wrong_input = "Хорошо, попробуем еще разочек."
-    correct_input = "Ура! Ваш проект %s добавлен."
+    correct_input = "Ура! Ваш проект %s добавлен. Можете задавать вопросы, я обазательно на них отвечу!"
     delete_proj = "Вот список ваших проектов, выберете который хотите удалить" # TODO
-    research_clean_context = "Контекст очищен для %s"
+    research_clean_context = "Контекст очищен"
     lst_proj = "Список ваших научных работ"
 
 class ResearchStates(StatesGroup):
@@ -119,7 +119,7 @@ def set_subjects(message: Message) -> None:
 @bot.callback_query_handler(lambda x: x.data in set(["yes_sub", "no_sub"]))
 def set_subjects_check(callback: CallbackQuery) -> None:
     if callback.data == "no_sub":
-        set_subjects(callback.message)
+        bot.send_message(callback.message.chat.id, L18N_CONFIG.new_subjects)
         bot.set_state(callback.message.chat.id, ResearchStates.subjects)
         return
         
@@ -174,7 +174,7 @@ def final_check_callback(callback: CallbackQuery) -> None:
             ]
         
         bot.set_state(callback.message.chat.id, ResearchStates.in_processing)
-        bot.send_message(callback.message.chat.id, "Проект вашей работы успешно добавлен.")
+        bot.send_message(callback.message.chat.id, L18N_CONFIG.correct_input.format(data[callback.message.chat.id]['research_name']))
     
     elif callback.data == "incorrect":
         bot.send_message(callback.message.chat.id, L18N_CONFIG.wrong_input)
@@ -185,7 +185,7 @@ def final_check_callback(callback: CallbackQuery) -> None:
 # =========================================================================================
 
 # processing
-@bot.message_handler(state=ResearchStates.in_processing)
+@bot.message_handler(state=ResearchStates.in_processing, func=lambda x: not x.text.startswith("/"))
 def process_user_querry(message: Message) -> None:
     history = data[message.chat.id]["history"]
     
@@ -198,7 +198,7 @@ def process_user_querry(message: Message) -> None:
 # ==========================================================================================
 
 # latex
-@bot.message_handler(commands=["latex"])
+@bot.message_handler(state="*", commands=["latex"])
 def get_latex(message: Message) -> None:
     bot.send_message(message.chat.id, text="Пришлите мне черновик вашей статьи")
     bot.set_state(message.chat.id, ResearchStates.latex_build)
@@ -217,7 +217,7 @@ def build_latex(message: Message) -> None:
 # ==========================================================================================
 
 # search
-@bot.message_handler(commands=["search"])
+@bot.message_handler(state="*", commands=["search"])
 def get_search(message: Message) -> None:
     bot.send_message(message.chat.id, text="Постараюсь поискать для вас интересной информации. Пришлите мне поисковой запрос")
     bot.set_state(message.chat.id, ResearchStates.search)
@@ -230,7 +230,7 @@ def search(message: Message) -> None:
     bot.set_state(message.chat.id, ResearchStates.in_processing)
 
 # search
-@bot.message_handler(commands=["arxiv_search"])
+@bot.message_handler(state="*", commands=["arxiv_search"])
 def get_arxiv_search(message: Message) -> None:
     bot.send_message(message.chat.id, text="Постараюсь поискать для вас информации из arxiv. Пришлите мне поисковой запрос")
     bot.set_state(message.chat.id, ResearchStates.arxiv_search)
@@ -245,12 +245,12 @@ def arxiv_search(message: Message) -> None:
 
 # ==========================================================================================
 
-@bot.message_handler(commands=['cancel'])
+@bot.message_handler(state="*", commands=['cancel'])
 def cancel(message: Message) -> None:
     bot.send_message(message.chat.id, L18N_CONFIG.cancel_msg)
     bot.delete_state(message.chat.id)
 
-@bot.message_handler(commands=["clean_context"])
+@bot.message_handler(state="*", commands=["clean_context"])
 def clear_context(message: Message) -> None:
         data[message.chat.id]["history"] = [
                     SystemMessage(

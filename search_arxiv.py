@@ -7,11 +7,6 @@ warnings.filterwarnings('ignore')
 client = arxiv.Client()
 
 
-def search_arxiv(query, n=10):
-    search = arxiv.Search(query=query, max_results = n, sort_by = arxiv.SortCriterion.SubmittedDate)
-    results = list(client.results(search))
-    return [{'summary': result.summary, 'title': result.title, 'entry_id': result.entry_id} for result in results][:n]
-
 class SearcherBotARXIV(GigaBot):
     def __init__(self, token=TOKEN) -> None:
         init_message='''##ЛИЧНОСТЬ
@@ -32,9 +27,16 @@ class SearcherBotARXIV(GigaBot):
 <Текст о наиболее подходящей информации из найденных статей и рекомендация на то, какие статьи лучше посмотреть>
 '''
         super().__init__(init_message, token)
+    
+    @staticmethod
+    def search_arxiv(query, n=10):
+        search = arxiv.Search(query=query, max_results = n, sort_by = arxiv.SortCriterion.SubmittedDate)
+        results = list(client.results(search))
+        return [{'summary': result.summary, 'title': result.title, 'entry_id': result.entry_id} for result in results][:n]
+
 
     def chatting(self, message, n=5):
-        top10 = search_arxiv(message)
+        top10 = self.search_arxiv(message)
         prompt = f"""
 ВВОД ПОЛЬЗОВАТЕЛЯ: {message}
 РЕЗУЛЬТАТ ПОИСКА: {top10}

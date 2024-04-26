@@ -4,9 +4,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-def search_ddgs(query, n=10):
-    return DDGS().text(query, max_results=n)
-
 
 class SearcherBotDDG(GigaBot):
     def __init__(self, token=TOKEN) -> None:
@@ -24,8 +21,12 @@ class SearcherBotDDG(GigaBot):
 '''
         super().__init__(init_message, token)
 
+    @staticmethod
+    def search_ddgs(query, n=10):
+        return DDGS().text(query, max_results=n)
+
     def chatting(self, message, n=5):
-        top10 = search_ddgs(message)
+        top10 = self.search_ddgs(message)
         prompt = f"""
 ВВОД ПОЛЬЗОВАТЕЛЯ: {message}
 РЕЗУЛЬТАТ ПОИСКА: {top10}
