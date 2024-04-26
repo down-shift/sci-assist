@@ -11,7 +11,7 @@ from latexify import LatexBuilder
 from search_ddg import SearcherBotDDG
 from search_arxiv import SearcherBotARXIV
 
-TG_TOKEN = "7029262559:AAHESYrvvDyRunTvzb0DoDu_p_2oeRyECyE"
+TG_TOKEN = "<token>"
 # https://t.me/GigaResearchAssistant_bot
 
 class L18N_CONFIG:
